@@ -1,0 +1,13 @@
+# dsh-plugin-rank bundle patch.
+#
+# 这是本 bundle 对 DSH 组合层的补丁：把插件运行行注入到 Web profile
+# （dsh-base + dsh-web-app 之上的又一个补丁层）。
+#
+# - id: profile 内唯一标识，用于覆盖/禁用。
+# - name: 本 bundle 的包名，loader 会从 profile 的 node_modules 导入它。
+# - inject: [webServer] 保证 webServer 服务就绪后再激活本插件，
+#   因此 apply() 内可以安全地调用 ctx.webServer.register()。
+- insert:
+    - id: plugin-rank
+      name: dsh-plugin-rank
+      inject: [webServer]

@@ -1,0 +1,61 @@
+{
+  "name": "dsh-plugin-rank",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 插件排名与推荐中心：抓取全部 DSH 插件，按星标排名（含理由）、智能推荐（含理由）、一键安装/卸载管理。",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "plugin-rank",
+    "ranking",
+    "recommend",
+    "cordis",
+    "marketplace"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "ui",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('lib',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "verify": "node scripts/verify.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

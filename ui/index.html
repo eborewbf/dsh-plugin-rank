@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DSH 插件排名与推荐中心 · dsh-plugin-rank</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1c212b;
+    --border: #262d3a;
+    --text: #e6e9ef;
+    --muted: #8b94a7;
+    --accent: #4f8cff;
+    --accent-2: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --radius: 10px;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.6;
+  }
+  header {
+    padding: 20px 28px 14px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #12151c, var(--bg));
+  }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .5px; }
+  header h1 .badge {
+    display: inline-block; margin-left: 10px; font-size: 12px; font-weight: 500;
+    color: var(--accent-2); border: 1px solid currentColor; border-radius: 20px;
+    padding: 1px 10px; vertical-align: 3px;
+  }
+  .hdr-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .meta { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+  .meta code { font-family: var(--mono); color: var(--text); }
+  .notice { margin-top: 8px; color: var(--warn); font-size: 12.5px; }
+  nav.tabs { display: flex; gap: 4px; padding: 0 28px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  nav.tabs button {
+    appearance: none; background: transparent; border: none; color: var(--muted);
+    padding: 12px 16px 10px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent;
+  }
+  nav.tabs button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  main { padding: 18px 28px 40px; max-width: 1080px; margin: 0 auto; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .toolbar button, .toolbar select {
+    appearance: none; background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer;
+  }
+  .toolbar button.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .toolbar .spacer { flex: 1; }
+  .status { font-size: 12.5px; color: var(--muted); }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; display: flex; gap: 14px; align-items: flex-start;
+  }
+  .card .idx {
+    flex: 0 0 42px; font-size: 15px; font-weight: 700; color: var(--accent);
+    font-family: var(--mono); text-align: center; padding-top: 4px;
+  }
+  .card .body { flex: 1; min-width: 0; }
+  .card .name { font-size: 15px; font-weight: 600; }
+  .card .name a { color: var(--text); text-decoration: none; }
+  .card .name a:hover { color: var(--accent); }
+  .card .stars { color: var(--warn); font-family: var(--mono); font-size: 13px; margin-left: 8px; }
+  .card .desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .card .desc-zh { color: var(--accent-2); font-size: 12.5px; margin-top: 2px; }
+  .toolbar button.active { box-shadow: inset 0 0 0 1px var(--accent-2); color: var(--accent-2); }
+  .card .reason {
+    margin-top: 8px; font-size: 12.5px; color: var(--text);
+    background: var(--panel-2); border-left: 3px solid var(--accent);
+    padding: 8px 10px; border-radius: 6px;
+  }
+  .card .reasons { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .card .reasons li { font-size: 12.5px; color: var(--text); }
+  .card .reasons li::marker { color: var(--accent-2); }
+  .score { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--accent-2); }
+  .actions { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+  .actions button {
+    appearance: none; border-radius: 8px; padding: 6px 12px; font-size: 12.5px; cursor: pointer;
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  }
+  .actions button.install { background: var(--accent); border-color: var(--accent); }
+  .actions button.remove { background: transparent; color: var(--danger); border-color: var(--danger); }
+  .actions button:disabled { opacity: .5; cursor: not-allowed; }
+  .tag {
+    display: inline-block; font-size: 11px; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0 6px; margin: 0 4px 2px 0;
+  }
+  .tag.npm { color: var(--danger); border-color: var(--danger); }
+  .tag.gh { color: var(--accent); border-color: var(--accent); }
+  .pkg { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .github-known { color: var(--warn); }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .lang-toggle { display: flex; gap: 2px; }
+  .lang-toggle button {
+    appearance: none; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle button.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+  /* 详情面板（效果截图 + 评论） */
+  .detail {
+    margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;
+  }
+  .detail h4 { margin: 8px 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .detail h4 .n { color: var(--accent); }
+  .shots { display: flex; flex-wrap: wrap; gap: 8px; }
+  .shot {
+    flex: 0 0 220px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    background: var(--panel-2);
+  }
+  .shot img { width: 100%; height: 130px; object-fit: cover; display: block; cursor: pointer; background: #000; }
+  .shot .cap { padding: 5px 8px; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reviews { display: flex; flex-direction: column; gap: 6px; }
+  .review {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  }
+  .review .rh { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .review .rh .t { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .review .rh .t.issue { color: var(--accent); }
+  .review .rh .t.comment { color: var(--accent-2); }
+  .review .rh .au { font-size: 11px; color: var(--muted); }
+  .review .rh time { font-size: 11px; color: var(--muted); margin-left: auto; }
+  .review .b { font-size: 12px; color: var(--text); margin-top: 2px; }
+  .review .b a { color: var(--accent); text-decoration: none; }
+  .rev-loader { color: var(--muted); font-size: 12px; padding: 4px 0; }
+  .detail-empty { color: var(--muted); font-size: 12px; padding: 4px 0; }
+  .expand {
+    margin-top: 6px; appearance: none; background: transparent; color: var(--accent);
+    border: none; font-size: 12px; cursor: pointer; padding: 0;
+  }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.82); display: none; align-items: center; justify-content: center; z-index: 20; cursor: zoom-out; }
+  .lightbox.show { display: flex; }
+  .lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 18px; font-size: 13px; max-width: 640px; width: max-content;
+    display: none; z-index: 9; box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  }
+  #toast.show { display: block; }
+  #toast.ok { border-color: var(--accent-2); }
+  #toast.err { border-color: var(--danger); }
+  #toast pre { margin: 6px 0 0; font-size: 11.5px; max-height: 140px; overflow: auto; color: var(--muted); white-space: pre-wrap; }
+  .doc h2 { font-size: 16px; margin: 22px 0 8px; }
+  .doc h2:first-child { margin-top: 0; }
+  .doc p, .doc li { color: var(--text); font-size: 14px; }
+  .doc li { margin-bottom: 4px; }
+  .doc .hl { color: var(--accent-2); font-weight: 600; }
+  .doc blockquote {
+    margin: 10px 0; padding: 10px 14px; background: var(--panel-2);
+    border-left: 3px solid var(--accent); border-radius: 6px; color: var(--muted); font-size: 13px;
+  }
+  @media (max-width: 720px) {
+    main, nav.tabs, header { padding-left: 14px; padding-right: 14px; }
+    .card { flex-direction: column; }
+    .actions { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-top">
+    <h1><span data-i18n="title">DSH 插件排名与推荐中心</span> <span class="badge">dsh-plugin-rank</span></h1>
+    <div class="lang-toggle">
+      <button id="lang-zh" class="active">中文</button>
+      <button id="lang-en">EN</button>
+    </div>
+  </div>
+  <div class="meta" id="meta">加载中…</div>
+  <div class="notice" id="notice" style="display:none"></div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="ranking" class="active" data-i18n="tab.ranking">⭐ 星标排名</button>
+  <button data-tab="recommend" data-i18n="tab.recommend">💡 智能推荐</button>
+  <button data-tab="manage" data-i18n="tab.manage">📦 插件管理</button>
+  <button data-tab="about" data-i18n="tab.about">📖 说明</button>
+</nav>
+
+<main>
+  <section id="tab-ranking">
+    <div class="toolbar">
+      <button class="primary" id="btn-refresh-ranking" data-i18n="btn.refresh">刷新数据</button>
+      <button id="btn-enrich" data-i18n="btn.enrich">补充星标</button>
+      <button class="btn-translate" id="btn-translate-rank">🌐 中文描述</button>
+      <span class="spacer"></span>
+      <span class="status" id="rank-status"></span>
+    </div>
+    <div class="list" id="rank-list"><div class="empty" data-i18n="empty.loading">加载中…</div></div>
+  </section>
+
+  <section id="tab-recommend" style="display:none">
+    <div class="toolbar">
+      <label class="status" data-i18n="label.top">推荐数量</label>
+      <select id="rec-top">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
+      <button class="primary" id="btn-refresh-recommend" data-i18n="btn.refreshRec">刷新推荐</button>
+      <button class="btn-translate" id="btn-translate-rec">🌐 中文描述</button>
+      <span class="spacer"></span>
+      <span class="status" id="rec-status"></span>
+    </div>
+    <div class="list" id="rec-list"><div class="empty" data-i18n="empty.loading">加载中…</div></div>
+  </section>
+
+  <section id="tab-manage" style="display:none">
+    <div class="toolbar">
+      <button class="primary" id="btn-refresh-manage" data-i18n="btn.refreshMan">刷新已安装</button>
+      <span class="spacer"></span>
+      <span class="status" id="man-status"></span>
+    </div>
+    <div class="list" id="man-list"><div class="empty" data-i18n="empty.loading">加载中…</div></div>
+  </section>
+
+  <section id="tab-about" style="display:none" class="doc">
+    <h2 data-i18n="about.what.h2">这个插件是做什么的？</h2>
+    <p data-i18n="about.what.p1">GitHub 上 DeepSeek Harness 的插件越来越多，逐个逛仓库太费时间。</p>
+    <p data-i18n="about.what.p2">本插件把全部 DSH 插件聚合到一个页面里，帮你：<span class="hl">排名、推荐、管理</span>。</p>
+    <h2 data-i18n="about.feat.h2">主要功能</h2>
+    <ul>
+      <li data-i18n="about.feat.li1"><span class="hl">星标排名</span>：按 GitHub 星标数对全部插件排序，并逐条写明「为什么排在当前位置」——星标数、相对名次、被 fork 情况、维护活跃度、是否已归档。</li>
+      <li data-i18n="about.feat.li2"><span class="hl">智能推荐</span>：不止看星标，还综合维护活跃度、issue 健康度、增长势头，给出 0-100 的推荐分，并列出每一条推荐理由。</li>
+      <li data-i18n="about.feat.li3"><span class="hl">一键管理</span>：直接在页面里安装 / 卸载插件，复用 DSH 官方同款 pnpm 机制，写回 <code>dsh.profile.bundles</code>。</li>
+    </ul>
+    <h2 data-i18n="about.use.h2">有什么用、有什么好处？</h2>
+    <ul>
+      <li data-i18n="about.use.li1"><span class="hl">省时</span>：不用逐个逛 GitHub，一次看清生态全景，快速知道哪些插件最受认可。</li>
+      <li data-i18n="about.use.li2"><span class="hl">避坑</span>：排名理由会标注「长期未更新」「已被归档」的插件，避免装到过时、废弃的项目。</li>
+      <li data-i18n="about.use.li3"><span class="hl">选得准</span>：星标高不等于适合你；推荐分综合了活跃度和健康度，帮你挑「活着且在进步」的插件。</li>
+      <li data-i18n="about.use.li4"><span class="hl">装得快</span>：看到就装、不要就卸，全部在页面内完成，改完重启 <code>dsh web</code> 生效。</li>
+    </ul>
+    <h2 data-i18n="about.data.h2">数据说明</h2>
+    <ul>
+      <li data-i18n="about.data.li1">插件来源：GitHub 主题 <code>dsh-plugin</code> / <code>deepseek-harness-plugin</code> / <code>deepseek-harness</code> 的仓库。</li>
+      <li data-i18n="about.data.li2">结果缓存 6 小时，避免触发 GitHub 限流；抓取失败时自动使用缓存。</li>
+      <li data-i18n="about.data.li3">设置环境变量 <code>GITHUB_TOKEN</code> 可提高 API 限额，获得更全的数据。</li>
+    </ul>
+    <h2 data-i18n="about.install.h2">安装 / 使用</h2>
+    <blockquote>
+      <span data-i18n="about.install.line1">1. 在 <code>dsh-plugin-rank</code> 目录执行 <code>pnpm install &amp;&amp; pnpm build</code></span><br />
+      <span data-i18n="about.install.line2">2. 在 DSH 安装该插件：<code>dsh plugin add dsh-plugin-rank</code>（或页面内一键安装后）</span><br />
+      <span data-i18n="about.install.line3">3. 重启 <code>dsh web</code>，浏览器打开 <code>http://127.0.0.1:3080/plugin-rank/</code></span>
+    </blockquote>
+  </section>
+</main>
+
+<div id="toast"></div>
+
+<div class="lightbox" id="lightbox"><img id="lightbox-img" alt=""></div>
+
+<script>
+(function () {
+  'use strict';
+  var API = '/plugin-rank/api';
+  var installedByRepo = {};   // owner/repo -> package name
+  var installedBundles = [];
+  var lang = localStorage.getItem('dsh-rank-lang') || 'zh';   // 'zh' | 'en'
+  var translateOn = localStorage.getItem('dsh-rank-translate') === '1';   // 是否显示中文描述
+  var transCache = {};   // 英文描述 -> 中文翻译缓存
+
+  // 按当前语言取文本：L({zh:'…', en:'…'})
+  function L(pair) { return pair && pair[lang] ? pair[lang] : (pair ? pair.zh : ''); }
+
+  // 多个免费翻译源依次尝试；返回 null 表示该源失败/限流，继续下一个。
+  var TRANS_PROVIDERS = [
+    // 1) Google 非官方接口（client=gtx），浏览器端最稳定、支持 CORS
+    function (text) {
+      return fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=' + encodeURIComponent(text))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d[0]) return null;
+          var t = d[0].map(function (seg) { return seg[0]; }).join('');
+          return t && t !== text ? t : null;
+        })
+        .catch(function () { return null; });
+    },
+    // 2) MyMemory（免费额度有限，命中限流提示时跳过）
+    function (text) {
+      return fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|zh-CN')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var t = d && d.responseData && d.responseData.translatedText;
+          if (t && /MYMEMORY WARNING/i.test(t)) return null;   // 今日免费额度已用完，视为失败
+          return t && t !== text ? t : null;
+        })
+        .catch(function () { return null; });
+    },
+    // 3) Lingva（Google 翻译代理）兜底
+    function (text) {
+      return fetch('https://lingva.ml/api/v1/en/zh-CN/' + encodeURIComponent(text))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var t = d && d.translation;
+          return t && t !== text ? t : null;
+        })
+        .catch(function () { return null; });
+    }
+  ];
+
+  // 懒加载翻译一段英文描述为中文（优先后端，失败再走外部免费源兜底，按文本缓存）。
+  function translateText(text, cb) {
+    if (!text) { cb(''); return; }
+    if (transCache[text]) { cb(transCache[text]); return; }
+    fetch(API + '/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.zh) { transCache[text] = d.zh; cb(d.zh); }
+      else { translateExternal(text, cb); }
+    }).catch(function () { translateExternal(text, cb); });
+  }
+
+  // 外部免费翻译源依次尝试（后端不可用时的兜底）。
+  function translateExternal(text, cb) {
+    var i = 0;
+    (function next() {
+      if (i >= TRANS_PROVIDERS.length) { cb(''); return; }
+      var zh = TRANS_PROVIDERS[i](text);
+      if (zh && zh.then) {
+        zh.then(function (val) {
+          if (val) { transCache[text] = val; cb(val); }
+          else { i++; next(); }
+        });
+      } else {
+        i++; next();
+      }
+    })();
+  }
+
+  // 根据 translateOn 刷新所有卡片的「中文描述」行。
+  function applyTranslate(scope) {
+    var nodes = (scope || document).querySelectorAll('.card .desc-zh');
+    nodes.forEach(function (node) {
+      var src = node.getAttribute('data-src');
+      if (!src) { node.style.display = 'none'; return; }
+      if (!translateOn) { node.style.display = 'none'; return; }
+      translateText(src, function (zh) {
+        if (zh) { node.textContent = L({ zh: '中文：' + zh, en: 'CN: ' + zh }); node.style.display = ''; }
+      });
+    });
+  }
+
+  // 更新所有翻译开关按钮的文本与高亮状态。
+  function updateTranslateToggle() {
+    document.querySelectorAll('.btn-translate').forEach(function (b) {
+      b.classList.toggle('active', translateOn);
+      b.textContent = translateOn
+        ? L({ zh: '🌐 中文描述：开', en: '🌐 CN desc: on' })
+        : L({ zh: '🌐 中文描述', en: '🌐 CN desc' });
+    });
+  }
+
+  function toggleTranslate() {
+    translateOn = !translateOn;
+    localStorage.setItem('dsh-rank-translate', translateOn ? '1' : '0');
+    updateTranslateToggle();
+    applyTranslate(document);
+  }
+
+  // 全站静态文案的中英对照表（键与 data-i18n 对应）。
+  var I18N = {
+    'title': { zh: 'DSH 插件排名与推荐中心', en: 'DSH Plugin Ranking & Recommendation Center' },
+    'tab.ranking': { zh: '⭐ 星标排名', en: '⭐ Star Ranking' },
+    'tab.recommend': { zh: '💡 智能推荐', en: '💡 Recommend' },
+    'tab.manage': { zh: '📦 插件管理', en: '📦 Manage' },
+    'tab.about': { zh: '📖 说明', en: '📖 About' },
+    'btn.refresh': { zh: '刷新数据', en: 'Refresh' },
+    'btn.enrich': { zh: '补充星标', en: 'Enrich Stars' },
+    'label.top': { zh: '推荐数量', en: 'Top N' },
+    'btn.refreshRec': { zh: '刷新推荐', en: 'Refresh' },
+    'btn.refreshMan': { zh: '刷新已安装', en: 'Refresh' },
+    'status.rank.done': { zh: '已按星标降序排名', en: 'Sorted by stars (desc)' },
+    'status.top': { zh: '综合评分 Top {n}', en: 'Top {n} by score' },
+    'status.man.count': { zh: '共 {n} 个已安装 bundle', en: '{n} installed bundles' },
+    'status.man.zero': { zh: '共 0 个已安装 bundle', en: '0 installed bundles' },
+    'empty.loading': { zh: '加载中…', en: 'Loading…' },
+    'empty.nodata': { zh: '暂无数据', en: 'No data' },
+    'empty.norec': { zh: '暂无推荐', en: 'No recommendations' },
+    'empty.noinst': { zh: '还没有安装任何插件。到「星标排名 / 智能推荐」里点「安装」即可。', en: 'Nothing installed yet. Click "Install" in Star Ranking / Recommend.' },
+    'empty.loadfail': { zh: '加载失败：', en: 'Failed to load: ' },
+    'btn.refreshing': { zh: '刷新中…', en: 'Refreshing…' },
+    'about.what.h2': { zh: '这个插件是做什么的？', en: 'What does this plugin do?' },
+    'about.what.p1': { zh: 'GitHub 上 DeepSeek Harness 的插件越来越多，逐个逛仓库太费时间。', en: 'DeepSeek Harness has more and more plugins on GitHub; browsing each repo one by one is time-consuming.' },
+    'about.what.p2': { zh: '本插件把全部 DSH 插件聚合到一个页面里，帮你：<span class="hl">排名、推荐、管理</span>。', en: 'This plugin aggregates all DSH plugins into one page so you can easily <span class="hl">rank, recommend, manage</span>.' },
+    'about.feat.h2': { zh: '主要功能', en: 'Key Features' },
+    'about.feat.li1': { zh: '<span class="hl">星标排名</span>：按 GitHub 星标数对全部插件排序，并逐条写明「为什么排在当前位置」——星标数、相对名次、被 fork 情况、维护活跃度、是否已归档。', en: '<span class="hl">Star Ranking</span>: sorts all plugins by GitHub stars and explains why each one ranks where it is — stars, relative rank, forks, maintenance activity, archived or not.' },
+    'about.feat.li2': { zh: '<span class="hl">智能推荐</span>：不止看星标，还综合维护活跃度、issue 健康度、增长势头，给出 0-100 的推荐分，并列出每一条推荐理由。', en: '<span class="hl">Smart Recommend</span>: goes beyond stars, combining maintenance activity, issue health and momentum into a 0-100 score, with every reason listed.' },
+    'about.feat.li3': { zh: '<span class="hl">一键管理</span>：直接在页面里安装 / 卸载插件，复用 DSH 官方同款 pnpm 机制，写回 <code>dsh.profile.bundles</code>。', en: '<span class="hl">One-click Manage</span>: install / uninstall plugins right in the page, reusing DSH\u2019s native pnpm flow and writing back <code>dsh.profile.bundles</code>.' },
+    'about.use.h2': { zh: '有什么用、有什么好处？', en: 'Why use it, what\u2019s in it for you?' },
+    'about.use.li1': { zh: '<span class="hl">省时</span>：不用逐个逛 GitHub，一次看清生态全景，快速知道哪些插件最受认可。', en: '<span class="hl">Saves time</span>: no need to browse GitHub repo by repo — see the whole ecosystem at a glance and know which plugins are most trusted.' },
+    'about.use.li2': { zh: '<span class="hl">避坑</span>：排名理由会标注「长期未更新」「已被归档」的插件，避免装到过时、废弃的项目。', en: '<span class="hl">Avoid duds</span>: ranking reasons flag \u201Cabandoned\u201d or \u201carchived\u201d plugins so you don\u2019t install stale projects.' },
+    'about.use.li3': { zh: '<span class="hl">选得准</span>：星标高不等于适合你；推荐分综合了活跃度和健康度，帮你挑「活着且在进步」的插件。', en: '<span class="hl">Choose well</span>: high stars alone don\u2019t mean it fits you; the score factors activity and health to pick plugins that are alive and improving.' },
+    'about.use.li4': { zh: '<span class="hl">装得快</span>：看到就装、不要就卸，全部在页面内完成，改完重启 <code>dsh web</code> 生效。', en: '<span class="hl">Quick install</span>: install or remove right in the page; restart <code>dsh web</code> to make changes take effect.' },
+    'about.data.h2': { zh: '数据说明', en: 'Data Sources' },
+    'about.data.li1': { zh: '插件来源：GitHub 主题 <code>dsh-plugin</code> / <code>deepseek-harness-plugin</code> / <code>deepseek-harness</code> 的仓库。', en: 'Plugins come from GitHub topics <code>dsh-plugin</code> / <code>deepseek-harness-plugin</code> / <code>deepseek-harness</code>.' },
+    'about.data.li2': { zh: '结果缓存 6 小时，避免触发 GitHub 限流；抓取失败时自动使用缓存。', en: 'Results are cached for 6 hours to avoid GitHub rate limits; stale cache is used if fetching fails.' },
+    'about.data.li3': { zh: '设置环境变量 <code>GITHUB_TOKEN</code> 可提高 API 限额，获得更全的数据。', en: 'Set <code>GITHUB_TOKEN</code> to raise the API limit and get more complete data.' },
+    'about.install.h2': { zh: '安装 / 使用', en: 'Install / Usage' },
+    'about.install.line1': { zh: '1. 在 <code>dsh-plugin-rank</code> 目录执行 <code>pnpm install &amp;&amp; pnpm build</code>', en: '1. Run <code>pnpm install &amp;&amp; pnpm build</code> inside the <code>dsh-plugin-rank</code> directory' },
+    'about.install.line2': { zh: '2. 在 DSH 安装该插件：<code>dsh plugin add dsh-plugin-rank</code>（或页面内一键安装后）', en: '2. Install the plugin in DSH: <code>dsh plugin add dsh-plugin-rank</code> (or use one-click install above)' },
+    'about.install.line3': { zh: '3. 重启 <code>dsh web</code>，浏览器打开 <code>http://127.0.0.1:3080/plugin-rank/</code>', en: '3. Restart <code>dsh web</code> and open <code>http://127.0.0.1:3080/plugin-rank/</code>' }
+  };
+
+  // 把静态文案元素（data-i18n）按当前语言刷新。
+  function applyStaticLang() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var pair = I18N[el.getAttribute('data-i18n')];
+      if (pair) el.innerHTML = pair[lang] || pair.zh || '';
+    });
+  }
+
+  // 刷新各 tab 的动态状态文本（随语言切换）。
+  function refreshStatus() {
+    if (dataCache.ranking) el('rank-status').textContent = L({ zh: '已按星标降序排名', en: 'Sorted by stars (desc)' });
+    if (dataCache.recommend) {
+      var n = (dataCache.recommend.list || []).length;
+      el('rec-status').textContent = L({ zh: '综合评分 Top ' + n, en: 'Top ' + n + ' by score' });
+    }
+    el('man-status').textContent = L({ zh: '共 ' + installedBundles.length + ' 个已安装 bundle', en: installedBundles.length + ' installed bundles' });
+  }
+
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('dsh-rank-lang', l);
+    var zh = el('lang-zh'), en = el('lang-en');
+    if (zh && en) { zh.classList.toggle('active', l === 'zh'); en.classList.toggle('active', l === 'en'); }
+    applyStaticLang();
+    updateTranslateToggle();
+    refreshStatus();
+    // 重新渲染当前数据
+    if (lastMetaData) applyMeta(lastMetaData);
+    if (dataCache.ranking) renderList(el('rank-list'), dataCache.ranking);
+    if (dataCache.recommend) renderRecommend(dataCache.recommend);
+    if (installedBundles.length) loadManage();
+  }
+
+  function el(id) { return document.getElementById(id); }
+  function showTab(name) {
+    ['ranking', 'recommend', 'manage', 'about'].forEach(function (t) {
+      el('tab-' + t).style.display = t === name ? '' : 'none';
+    });
+    document.querySelectorAll('nav.tabs button').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.tab === name);
+    });
+  }
+  document.querySelectorAll('nav.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      showTab(b.dataset.tab);
+      if (b.dataset.tab === 'ranking') loadRanking();
+      if (b.dataset.tab === 'recommend') loadRecommend();
+      if (b.dataset.tab === 'manage') loadManage();
+    });
+  });
+
+  function fmtStars(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function toast(msg, ok) {
+    var t = el('toast');
+    t.className = 'show ' + (ok ? 'ok' : 'err');
+    t.innerHTML = esc(msg);
+    setTimeout(function () { t.className = ''; }, 4000);
+  }
+
+  var lastTotal = 0;   // 记住最近一次已知的插件总数（推荐/管理页无 total 时兜底）
+  var lastMetaData = null;   // 记住最近一次 meta 数据，供语言切换时重新渲染
+
+  function applyMeta(data) {
+    lastMetaData = data;
+    var s = data.source === 'live' ? L({ zh: '实时抓取', en: 'Live' }) : L({ zh: '缓存数据', en: 'Cache' });
+    var st = data.stats || {};
+    if (data.total) lastTotal = data.total;
+    var total = data.total || lastTotal || 0;
+    var meta = L({ zh: '共 <code>' + total + '</code> 个插件', en: '<code>' + total + '</code> plugins' }) + ' · ' +
+      '<code>' + s + '</code> · ' +
+      L({ zh: '抓取于 <code>' + (data.fetchedAt || '-') + '</code>', en: 'fetched <code>' + (data.fetchedAt || '-') + '</code>' }) + ' · ' +
+      L({ zh: '已补星标 <code>' + st.githubKnown + '/' + st.withRepo + '</code>', en: 'stars enriched <code>' + st.githubKnown + '/' + st.withRepo + '</code>' });
+    if (st.missingRepos > 0) meta += L({ zh: ' · 待补 <code>' + st.missingRepos + '</code>', en: ' · pending <code>' + st.missingRepos + '</code>' });
+    if (st.hasToken) meta += ' · <code>' + L({ zh: '已设 GITHUB_TOKEN', en: 'GITHUB_TOKEN set' }) + '</code>';
+    el('meta').innerHTML = meta;
+    var n = el('notice');
+    if (st.missingRepos > 0) {
+      n.style.display = '';
+      n.innerHTML = L({ zh: '有 <code>' + st.missingRepos + '</code> 个插件尚未补充 GitHub 星标（设置 GITHUB_TOKEN 后在「补充星标」里补齐）。', en: '<code>' + st.missingRepos + '</code> plugins lack GitHub stars yet (set GITHUB_TOKEN, then use "Enrich Stars").' });
+    } else {
+      n.style.display = 'none';
+    }
+    var en = el('btn-enrich');
+    if (en) en.style.display = st.missingRepos > 0 ? '' : 'none';
+  }
+
+  function loadInstalled(cb) {
+    fetch(API + '/installed')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        installedByRepo = d.byRepo || {};
+        installedBundles = d.bundles || [];
+        if (cb) cb();
+      })
+      .catch(function () {});
+  }
+
+  function isInstalled(pkgName, fullName) {
+    if (pkgName && installedBundles.indexOf(pkgName) !== -1) return true;
+    if (fullName && installedByRepo[fullName.toLowerCase()] !== undefined) return true;
+    return false;
+  }
+
+  function buildActions(pkgName, fullName) {
+    var act = document.createElement('div');
+    act.className = 'actions';
+    var installed = isInstalled(pkgName, fullName);
+    var installBtn = document.createElement('button');
+    installBtn.className = 'install';
+    installBtn.textContent = installed
+      ? L({ zh: '已安装', en: 'Installed' })
+      : L({ zh: '安装 (' + pkgName + ')', en: 'Install (' + pkgName + ')' });
+    installBtn.disabled = installed;
+    installBtn.addEventListener('click', function () {
+      installBtn.disabled = true;
+      installBtn.textContent = L({ zh: '安装中…', en: 'Installing…' });
+      fetch(API + '/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spec: pkgName })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d.ok) {
+          toast(L({ zh: '安装成功：' + d.command + '\n重启 dsh web 后生效。', en: 'Installed: ' + d.command + '\nRestart dsh web to apply.' }), true);
+          loadInstalled(function () { installBtn.textContent = L({ zh: '已安装', en: 'Installed' }); });
+        } else {
+          toast(L({ zh: '安装失败：', en: 'Install failed: ' }) + (d.error || d.output || L({ zh: '未知错误', en: 'unknown error' })), false);
+          installBtn.textContent = L({ zh: '安装', en: 'Install' });
+          installBtn.disabled = false;
+        }
+      }).catch(function (e) {
+        toast(L({ zh: '请求失败：', en: 'Request failed: ' }) + e, false);
+        installBtn.disabled = false;
+        installBtn.textContent = L({ zh: '安装', en: 'Install' });
+      });
+    });
+    act.appendChild(installBtn);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'remove';
+    removeBtn.textContent = installed ? L({ zh: '卸载 (' + pkgName + ')', en: 'Uninstall (' + pkgName + ')' }) : '';
+    removeBtn.style.display = installed ? '' : 'none';
+    if (installed) {
+      removeBtn.addEventListener('click', function () {
+        removeBtn.disabled = true;
+        removeBtn.textContent = L({ zh: '卸载中…', en: 'Uninstalling…' });
+        fetch(API + '/remove', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: pkgName })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d.ok) {
+            toast(L({ zh: '卸载成功：' + d.command + '\n重启 dsh web 后生效。', en: 'Uninstalled: ' + d.command + '\nRestart dsh web to apply.' }), true);
+            loadInstalled(function () { renderList(el('rank-list'), dataCache.ranking); });
+          } else {
+            toast(L({ zh: '卸载失败：', en: 'Uninstall failed: ' }) + (d.error || d.output || L({ zh: '未知错误', en: 'unknown error' })), false);
+          }
+          removeBtn.disabled = false;
+        }).catch(function (e) { toast(L({ zh: '请求失败：', en: 'Request failed: ' }) + e, false); removeBtn.disabled = false; });
+      });
+    }
+    act.appendChild(removeBtn);
+    return act;
+  }
+
+  var dataCache = {};
+
+  function loadRanking() {
+    el('rank-status').textContent = L({ zh: '加载中…', en: 'Loading…' });
+    fetch(API + '/ranking')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        dataCache.ranking = d;
+        applyMeta(d);
+        renderList(el('rank-list'), d);
+        el('rank-status').textContent = L({ zh: '已按星标降序排名', en: 'Sorted by stars (desc)' });
+      })
+      .catch(function (e) { el('rank-list').innerHTML = '<div class="empty">' + esc(L({ zh: '加载失败：', en: 'Failed to load: ' }) + e) + '</div>'; });
+  }
+
+  function renderList(container, d) {
+    var list = d.list || [];
+    container.innerHTML = '';
+    if (!list.length) { container.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+    list.forEach(function (item) {
+      var r = item.repo;
+      var card = document.createElement('div');
+      card.className = 'card';
+      var idx = document.createElement('div');
+      idx.className = 'idx';
+      idx.textContent = '#' + item.rank;
+      var body = document.createElement('div');
+      body.className = 'body';
+      var name = document.createElement('div');
+      name.className = 'name';
+      var title = esc(r.packageName);
+      if (r.htmlUrl) title = '<a href="' + esc(r.htmlUrl) + '" target="_blank" rel="noopener">' + title + '</a>';
+      var starsHtml = r.githubKnown
+        ? '<span class="stars">★ ' + fmtStars(r.stars) + '</span>'
+        : '<span class="stars" title="暂无 GitHub 星标数据，按 npm 综合分排序">npm ' + (r.npmFinal || 0).toFixed(1) + '</span>';
+      var tags = '<span class="tag npm">npm</span>' +
+        (r.fullName ? '<span class="tag gh">GitHub</span>' : '') +
+        (r.archived ? '<span class="tag">已归档</span>' : '');
+      name.innerHTML = title + starsHtml + '<br/><span class="pkg">' + esc(r.fullName || '') + ' v' + esc(r.version) + '</span>' + tags;
+      body.appendChild(name);
+      if (r.description) {
+        var desc = document.createElement('div');
+        desc.className = 'desc';
+        desc.textContent = r.description;
+        body.appendChild(desc);
+        var dzh = document.createElement('div');
+        dzh.className = 'desc-zh';
+        dzh.setAttribute('data-src', r.description);
+        dzh.style.display = 'none';
+        body.appendChild(dzh);
+      }
+      var reason = document.createElement('div');
+      reason.className = 'reason';
+      reason.textContent = lang === 'en'
+        ? (item.reasonEn || item.reason || '')
+        : (item.reason || '');
+      body.appendChild(reason);
+      attachDetail(body, r);
+      card.appendChild(idx);
+      card.appendChild(body);
+      card.appendChild(buildActions(r.packageName, r.fullName));
+      container.appendChild(card);
+    });
+    applyTranslate(container);
+  }
+
+  function renderRecommend(d) {
+    applyMeta(d);
+    var container = el('rec-list');
+    container.innerHTML = '';
+    var list = d.list || [];
+    if (!list.length) { container.innerHTML = '<div class="empty">' + esc(L({ zh: '暂无推荐', en: 'No recommendations' })) + '</div>'; return; }
+    list.forEach(function (item) {
+      var r = item.repo;
+      var card = document.createElement('div');
+      card.className = 'card';
+      var idx = document.createElement('div');
+      idx.className = 'idx';
+      idx.innerHTML = '<span class="score">' + item.score + '</span><br/><span style="font-size:11px;color:var(--muted)">/100</span>';
+      var body = document.createElement('div');
+      body.className = 'body';
+      var name = document.createElement('div');
+      name.className = 'name';
+      var title = esc(r.packageName);
+      if (r.htmlUrl) title = '<a href="' + esc(r.htmlUrl) + '" target="_blank" rel="noopener">' + title + '</a>';
+      var starsHtml = r.githubKnown
+        ? '<span class="stars">★ ' + fmtStars(r.stars) + '</span>'
+        : '<span class="stars">npm ' + (r.npmFinal || 0).toFixed(1) + '</span>';
+      name.innerHTML = title + starsHtml + '<br/><span class="pkg">' + esc(r.fullName || '') + '</span>';
+      body.appendChild(name);
+      if (r.description) {
+        var desc = document.createElement('div');
+        desc.className = 'desc';
+        desc.textContent = r.description;
+        body.appendChild(desc);
+        var dzh = document.createElement('div');
+        dzh.className = 'desc-zh';
+        dzh.setAttribute('data-src', r.description);
+        dzh.style.display = 'none';
+        body.appendChild(dzh);
+      }
+      var ul = document.createElement('ul');
+      ul.className = 'reasons';
+      var reasons = lang === 'en' ? (item.reasonsEn || []) : (item.reasons || []);
+      (reasons.length ? reasons : (item.reasons || [])).forEach(function (reason) {
+        var li = document.createElement('li');
+        li.textContent = reason;
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      attachDetail(body, r);
+      card.appendChild(idx);
+      card.appendChild(body);
+      card.appendChild(buildActions(r.packageName, r.fullName));
+      container.appendChild(card);
+    });
+    applyTranslate(container);
+    el('rec-status').textContent = L({ zh: '综合评分 Top ' + list.length, en: 'Top ' + list.length + ' by score' });
+  }
+
+  function loadRecommend() {
+    var top = el('rec-top').value;
+    el('rec-status').textContent = L({ zh: '加载中…', en: 'Loading…' });
+    fetch(API + '/recommend?top=' + top)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        dataCache.recommend = d;
+        renderRecommend(d);
+      })
+      .catch(function (e) { el('rec-list').innerHTML = '<div class="empty">' + esc(L({ zh: '加载失败：', en: 'Failed to load: ' }) + e) + '</div>'; });
+  }
+
+  // —— 效果截图 + 评论展示 ——
+  function attachDetail(body, r) {
+    if (!r || !r.fullName) return;
+    var btn = document.createElement('button');
+    btn.className = 'expand';
+    btn.textContent = L({ zh: '▸ 查看效果截图与评论', en: '▸ View screenshots & reviews' });
+    var wrap = document.createElement('div');
+    wrap.className = 'detail';
+    wrap.style.display = 'none';
+    body.appendChild(btn);
+    body.appendChild(wrap);
+    btn.addEventListener('click', function () {
+      if (wrap.style.display !== 'none') {
+        wrap.style.display = 'none';
+        btn.textContent = L({ zh: '▸ 查看效果截图与评论', en: '▸ View screenshots & reviews' });
+        return;
+      }
+      wrap.style.display = '';
+      btn.textContent = L({ zh: '▾ 收起详情', en: '▾ Collapse' });
+      if (wrap.dataset.loaded) return;
+      wrap.dataset.loaded = '1';
+      wrap.innerHTML = '<div class="rev-loader">' + esc(L({ zh: '加载详情中…（首次需从 GitHub 抓取）', en: 'Loading details… (fetched from GitHub on first view)' })) + '</div>';
+      fetch(API + '/detail?repo=' + encodeURIComponent(r.fullName))
+        .then(function (res) { return res.json(); })
+        .then(function (d) {
+          if (d.error) throw new Error(d.error);
+          renderDetail(wrap, d);
+        })
+        .catch(function (e) {
+          wrap.innerHTML = '<div class="detail-empty">' + esc(L({ zh: '详情加载失败：', en: 'Failed to load details: ' }) + e) + '</div>';
+        });
+    });
+  }
+
+  function renderDetail(wrap, d) {
+    var html = '';
+    var shots = d.screenshots || [];
+    var reviews = d.reviews || [];
+    if (d.readmeExcerpt) {
+      html += '<div class="detail-empty">' + esc(d.readmeExcerpt) + '</div>';
+    }
+    // 效果截图
+    if (shots.length) {
+      html += '<h4>' + esc(L({ zh: '效果截图 / 演示', en: 'Screenshots / Demos' })) + ' <span class="n">(' + shots.length + ')</span></h4>';
+      html += '<div class="shots">';
+      shots.forEach(function (s) {
+        html += '<div class="shot"><img loading="lazy" src="' + esc(s.url) + '" alt="' + esc(s.alt) + '" data-full="' + esc(s.url) + '"><div class="cap">' + esc(s.alt) + '</div></div>';
+      });
+      html += '</div>';
+    }
+    // 评论与反馈
+    if (reviews.length) {
+      html += '<h4>' + esc(L({ zh: '评论与反馈', en: 'Reviews & Feedback' })) + ' <span class="n">(' + reviews.length + ')</span></h4>';
+      html += '<div class="reviews">';
+      reviews.forEach(function (v) {
+        var tag = v.type === 'issue'
+          ? '<span class="t issue">' + esc(L({ zh: 'Issue', en: 'Issue' })) + '</span>'
+          : '<span class="t comment">' + esc(L({ zh: '回复', en: 'Reply' })) + '</span>';
+        var labels = (v.labels || []).map(function (lb) { return '<span class="tag">' + esc(lb) + '</span>'; }).join('');
+        html += '<div class="review"><div class="rh">' + tag +
+          '<span class="t">' + esc(v.title || '') + '</span>' + labels +
+          '<span class="au">@' + esc(v.author) + '</span>' +
+          '<time>' + esc((v.createdAt || '').slice(0, 10)) + '</time></div>' +
+          '<div class="b">' + esc(v.body || '') + ' <a href="' + esc(v.url) + '" target="_blank" rel="noopener">↗</a></div></div>';
+      });
+      html += '</div>';
+    }
+    if (!shots.length && !reviews.length) {
+      html += '<div class="detail-empty">' + esc(L({ zh: '暂未抓取到截图或评论（README 可能没有图片，或仓库没有 Issue）。', en: 'No screenshots or reviews found (README may have no images, or no issues).' })) + '</div>';
+    }
+    wrap.innerHTML = html;
+    // 点击截图放大
+    wrap.querySelectorAll('.shot img').forEach(function (img) {
+      img.addEventListener('click', function () { openLightbox(img.getAttribute('data-full')); });
+    });
+  }
+
+  function openLightbox(url) {
+    el('lightbox-img').src = url;
+    el('lightbox').classList.add('show');
+  }
+
+  function loadManage() {
+    el('man-status').textContent = L({ zh: '加载中…', en: 'Loading…' });
+    fetch(API + '/installed')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        installedBundles = d.bundles || [];
+        installedByRepo = d.byRepo || {};
+        var container = el('man-list');
+        container.innerHTML = '';
+        if (!installedBundles.length) {
+          container.innerHTML = '<div class="empty">' + esc(L({ zh: '还没有安装任何插件。到「星标排名 / 智能推荐」里点「安装」即可。', en: 'Nothing installed yet. Click "Install" in Star Ranking / Recommend.' })) + '</div>';
+          el('man-status').textContent = L({ zh: '共 0 个已安装 bundle', en: '0 installed bundles' });
+          return;
+        }
+        installedBundles.forEach(function (name) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          var idx = document.createElement('div');
+          idx.className = 'idx';
+          idx.textContent = '📦';
+          var body = document.createElement('div');
+          body.className = 'body';
+          var nm = document.createElement('div');
+          nm.className = 'name';
+          nm.textContent = name;
+          body.appendChild(nm);
+          var dsc = document.createElement('div');
+          dsc.className = 'desc';
+          dsc.textContent = L({ zh: '已加入 profile 插件层（dsh.profile.bundles）', en: 'Added to profile plugin layer (dsh.profile.bundles)' });
+          body.appendChild(dsc);
+          card.appendChild(idx);
+          card.appendChild(body);
+          var act = document.createElement('div');
+          act.className = 'actions';
+          var rm = document.createElement('button');
+          rm.className = 'remove';
+          rm.textContent = L({ zh: '卸载', en: 'Uninstall' });
+          rm.addEventListener('click', function () {
+            rm.disabled = true;
+            fetch(API + '/remove', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: name })
+            }).then(function (r) { return r.json(); }).then(function (res) {
+              if (res.ok) { toast(L({ zh: '卸载成功：' + res.command + '\n重启 dsh web 后生效。', en: 'Uninstalled: ' + res.command + '\nRestart dsh web to apply.' }), true); loadManage(); }
+              else toast(L({ zh: '卸载失败：', en: 'Uninstall failed: ' }) + (res.error || res.output || L({ zh: '未知错误', en: 'unknown error' })), false);
+            }).catch(function (e) { toast(L({ zh: '请求失败：', en: 'Request failed: ' }) + e, false); rm.disabled = false; });
+          });
+          act.appendChild(rm);
+          card.appendChild(act);
+          container.appendChild(card);
+        });
+        el('man-status').textContent = L({ zh: '共 ' + installedBundles.length + ' 个已安装 bundle', en: installedBundles.length + ' installed bundles' });
+      })
+      .catch(function (e) { el('man-list').innerHTML = '<div class="empty">' + esc(L({ zh: '加载失败：', en: 'Failed to load: ' }) + e) + '</div>'; });
+  }
+
+  el('btn-refresh-ranking').addEventListener('click', function () {
+    this.textContent = L({ zh: '刷新中…', en: 'Refreshing…' });
+    fetch(API + '/discovery').then(function (r) { return r.json(); }).then(function (d) {
+      el('btn-refresh-ranking').textContent = L({ zh: '刷新数据', en: 'Refresh' });
+      if (d.error) { toast(L({ zh: '刷新失败：', en: 'Refresh failed: ' }) + d.error, false); return; }
+      toast(L({ zh: '已获取最新数据（' + d.total + ' 个插件）。', en: 'Fetched latest data (' + d.total + ' plugins).' }), true);
+      loadRanking();
+    }).catch(function (e) { el('btn-refresh-ranking').textContent = L({ zh: '刷新数据', en: 'Refresh' }); toast(L({ zh: '刷新失败：', en: 'Refresh failed: ' }) + e, false); });
+  });
+  el('btn-refresh-recommend').addEventListener('click', loadRecommend);
+  el('btn-refresh-manage').addEventListener('click', loadManage);
+  el('rec-top').addEventListener('change', loadRecommend);
+
+  el('lang-zh').addEventListener('click', function () { setLang('zh'); });
+  el('lang-en').addEventListener('click', function () { setLang('en'); });
+  document.querySelectorAll('.btn-translate').forEach(function (b) {
+    b.addEventListener('click', toggleTranslate);
+  });
+  setLang(lang);
+  updateTranslateToggle();
+  applyTranslate(document);
+  el('lightbox').addEventListener('click', function () { this.classList.remove('show'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') el('lightbox').classList.remove('show'); });
+
+  loadInstalled(loadRanking);
+})();
+</script>
+</body>
+</html>
