@@ -494,13 +494,7 @@
     if (st.missingRepos > 0) meta += L({ zh: ' · 待补 <code>' + st.missingRepos + '</code>', en: ' · pending <code>' + st.missingRepos + '</code>' });
     if (st.hasToken) meta += ' · <code>' + L({ zh: '已设 GITHUB_TOKEN', en: 'GITHUB_TOKEN set' }) + '</code>';
     el('meta').innerHTML = meta;
-    var n = el('notice');
-    if (st.missingRepos > 0) {
-      n.style.display = '';
-      n.innerHTML = L({ zh: '有 <code>' + st.missingRepos + '</code> 个插件尚未补充 GitHub 星标（设置 GITHUB_TOKEN 后在「补充星标」里补齐）。', en: '<code>' + st.missingRepos + '</code> plugins lack GitHub stars yet (set GITHUB_TOKEN, then use "Enrich Stars").' });
-    } else {
-      n.style.display = 'none';
-    }
+    el('notice').style.display = 'none';
     var en = el('btn-enrich');
     if (en) en.style.display = st.missingRepos > 0 ? '' : 'none';
   }
@@ -618,11 +612,8 @@
       if (r.htmlUrl) title = '<a href="' + esc(r.htmlUrl) + '" target="_blank" rel="noopener">' + title + '</a>';
       var starsHtml = r.githubKnown
         ? '<span class="stars">★ ' + fmtStars(r.stars) + '</span>'
-        : '<span class="stars" title="暂无 GitHub 星标数据，按 npm 综合分排序">npm ' + (r.npmFinal || 0).toFixed(1) + '</span>';
-      var tags = '<span class="tag npm">npm</span>' +
-        (r.fullName ? '<span class="tag gh">GitHub</span>' : '') +
-        (r.archived ? '<span class="tag">已归档</span>' : '');
-      name.innerHTML = title + starsHtml + '<br/><span class="pkg">' + esc(r.fullName || '') + ' v' + esc(r.version) + '</span>' + tags;
+        : '';
+      name.innerHTML = title + starsHtml + '<br/><span class="pkg">' + esc(r.fullName || '') + ' v' + esc(r.version) + '</span>';
       body.appendChild(name);
       if (r.description) {
         var desc = document.createElement('div');
@@ -671,7 +662,7 @@
       if (r.htmlUrl) title = '<a href="' + esc(r.htmlUrl) + '" target="_blank" rel="noopener">' + title + '</a>';
       var starsHtml = r.githubKnown
         ? '<span class="stars">★ ' + fmtStars(r.stars) + '</span>'
-        : '<span class="stars">npm ' + (r.npmFinal || 0).toFixed(1) + '</span>';
+        : '';
       name.innerHTML = title + starsHtml + '<br/><span class="pkg">' + esc(r.fullName || '') + '</span>';
       body.appendChild(name);
       if (r.description) {

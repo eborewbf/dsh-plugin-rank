@@ -91,8 +91,6 @@ function rankReasonNpm(repo: PluginRepo, rank: number, total: number): Bilingual
     zh.push(`npm 上约 ${fmtMonths(published)} 个月未发布新版本，请关注维护情况`)
     en.push(`no new npm release in ~${fmtMonths(published)} months, check maintenance status`)
   }
-  zh.push('在「补充数据」或设置 GITHUB_TOKEN 后可补全星标')
-  en.push('Fill in stars via "Enrich data" or by setting GITHUB_TOKEN')
   return { zh: zh.join('；'), en: en.join('; ') }
 }
 
