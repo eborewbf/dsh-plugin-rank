@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { RankKey } from './locales.ts'
+import { en, zh } from './locales.ts'
 import { RANK_CSS } from './rank.css.ts'
 
 /** API 根路径（与 host 侧 web.ts 的 MARKET_BASE 保持一致）。 */
@@ -73,11 +74,9 @@ interface PluginDetail {
 /** 已安装信息。 */
 interface InstalledInfo {
   bundles: string[]
+  removable: string[]
   byRepo: Record<string, string>
 }
-
-/** 翻译函数（locale seat 注入的 `plugin-rank` 字典翻译器）。 */
-type Translate = (key: RankKey) => string
 
 /** 格式化星标数（1.2k / 340）。 */
 function fmtStars(n: number): string {
@@ -156,12 +155,14 @@ function injectStyles(): void {
  * @param props - 关闭回调与翻译函数。
  * @returns 内嵌面板的元素树。
  */
-export function RankModal({ onClose, t }: { onClose: () => void; t: Translate }) {
+export function RankModal({ onClose }: { onClose: () => void }) {
   useEffect(injectStyles, [])
 
-  const lang = currentLang()
+  const [lang, setLang] = useState<'zh' | 'en'>(currentLang)
   const [tab, setTab] = useState<'ranking' | 'recommend' | 'manage'>('ranking')
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  // 本地翻译器：由字典 + lang 状态派生，模态内全文可控（不随宿主 locale 漂移）。
+  const t = (key: RankKey): string => (lang === 'en' ? en : zh)[key]
 
   // 数据缓存
   const [ranking, setRanking] = useState<{ meta: MetaData | null; list: RankedItem[] } | null>(null)
@@ -248,7 +249,7 @@ export function RankModal({ onClose, t }: { onClose: () => void; t: Translate })
       const res = await fetch(`${API}/installed`)
       const d = (await res.json()) as InstalledInfo
       setInstalled(d)
-      setManageList(d.bundles ?? [])
+      setManageList((d.removable ?? d.bundles ?? []))
     } catch (err) {
       setToast({ msg: t('empty.loadfail') + String(err), ok: false })
     } finally {
@@ -269,6 +270,12 @@ export function RankModal({ onClose, t }: { onClose: () => void; t: Translate })
     if (next === 'ranking') void loadRanking()
     if (next === 'recommend') void loadRecommend()
     if (next === 'manage') void loadInstalled()
+  }
+
+  /** 切换界面语言（中文/EN），并持久化到宿主 localStorage。 */
+  const switchLang = (next: 'zh' | 'en') => {
+    setLang(next)
+    try { localStorage.setItem('dsh-rank-lang', next) } catch {}
   }
 
   /** 安装插件。 */
@@ -577,6 +584,11 @@ export function RankModal({ onClose, t }: { onClose: () => void; t: Translate })
           <div className="pr-header">
             <span className="pr-title">{t('modal.title')}</span>
             <span className="pr-badge">dsh-plugin-rank</span>
+            <span className="pr-spacer" />
+            <span className="pr-lang" role="group" aria-label="language">
+              <button type="button" className={`pr-lang-btn ${lang === 'zh' ? 'active' : ''}`} onClick={() => switchLang('zh')}>中文</button>
+              <button type="button" className={`pr-lang-btn ${lang === 'en' ? 'active' : ''}`} onClick={() => switchLang('en')}>EN</button>
+            </span>
             <button ref={closeRef} type="button" className="pr-close" aria-label={t('modal.close')} onClick={onClose}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M18 6 6 18" />

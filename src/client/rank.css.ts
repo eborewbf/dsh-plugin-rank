@@ -113,6 +113,36 @@ export const RANK_CSS = `
 .pr-close:hover {
   background: var(--pr-hover);
 }
+.pr-spacer {
+  flex: none;
+  width: 8px;
+}
+.pr-lang {
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+  margin: 0 4px;
+}
+.pr-lang-btn {
+  flex: none;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border: 1px solid var(--pr-border-soft);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--pr-muted);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.pr-lang-btn.active {
+  color: var(--dsw-alias-label-primary-foreground);
+  background: var(--dsw-static-blue-900);
+  border-color: var(--dsw-static-blue-900);
+}
+.pr-lang-btn:hover:not(.active) {
+  background: var(--pr-hover);
+}
 
 /* —— Tab 栏 —— */
 .pr-tabs {

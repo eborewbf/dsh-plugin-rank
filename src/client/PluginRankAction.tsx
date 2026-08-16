@@ -86,7 +86,7 @@ export function PluginRankAction({ wide, t }: PluginRankActionProps) {
         </svg>
         {wide && <span style={labelStyle}>{label}</span>}
       </button>
-      {open && <RankModal onClose={() => { setOpen(false) }} t={t} />}
+      {open && <RankModal onClose={() => { setOpen(false) }} />}
     </>
   )
 }

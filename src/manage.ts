@@ -46,6 +46,17 @@ export function installedBundles(profile = 'web'): string[] {
   return dsh?.profile?.bundles ?? []
 }
 
+/**
+ * 可卸载的插件名单：仅包含「确实是 profile 直接依赖」的 bundle。
+ * 基础 bundle（如 @deepseek-ai/dsh-base、@deepseek-ai/dsh-web-app）由 profile
+ * 组合注入、不在 dependencies 中，不在可卸载之列。
+ */
+export function installedRemovable(profile = 'web'): string[] {
+  const { manifest } = readProfilePackage(profile)
+  const deps = (manifest.dependencies ?? {}) as Record<string, string>
+  return installedBundles(profile).filter((name) => deps[name] !== undefined)
+}
+
 /** 某包名是否已是 profile 的直接依赖。 */
 function isDependency(name: string, profile: string): boolean {
   const { manifest } = readProfilePackage(profile)
@@ -84,9 +95,13 @@ function runPnpm(args: string[], dir: string): ManageResult {
 }
 
 /**
- * 依据已安装依赖与 `dsh.bundle` 声明，重算 `dsh.profile.bundles`
- * （对齐官方 reconcilePlugins 的语义：新增的 bundle 追加进层栈；
- * 已移除或不再声明 bundle 的依赖从层栈剔除）。
+ * 依据已安装依赖与 `dsh.bundle` 声明，把「已是直接依赖且声明 bundle」的包
+ * 补进 `dsh.profile.bundles` 层栈（对齐官方 reconcilePlugins 的增量语义）。
+ *
+ * 这里只做「增量添加」，不做通用删除：基础 bundle（如 @deepseek-ai/dsh-base、
+ * @deepseek-ai/dsh-web-app）由 profile 组合注入，并不在 dependencies 中，
+ * 若在此按「非依赖即删」会误删，导致 webServer 等基础服务缺失。卸载时由
+ * `remove()` 单独从层栈剔除目标包。
  */
 export function reconcileBundles(profile = 'web'): void {
   const { manifest, dir } = readProfilePackage(profile)
@@ -97,14 +112,6 @@ export function reconcileBundles(profile = 'web'): void {
   for (const dep of deps) {
     if (isBundlePackage(dir, dep) && !bundles.includes(dep)) {
       bundles.push(dep)
-      changed = true
-    }
-  }
-  for (const name of [...bundles]) {
-    const still = deps.includes(name) && isBundlePackage(dir, name)
-    if (!still) {
-      const at = bundles.indexOf(name)
-      if (at !== -1) bundles.splice(at, 1)
       changed = true
     }
   }
@@ -135,12 +142,26 @@ export function remove(name: string, profile = 'web'): ManageResult {
   const res = runPnpm(['--filter', '@deepseek-ai/dsh-profile', 'remove', name], dir)
   if (res.ok) {
     try {
+      // 先重算新增，再把目标包从层栈剔除（不动基础 bundle）。
       reconcileBundles(profile)
+      stripBundle(name, profile)
     } catch (err) {
       res.error = `pnpm 成功，但重算 bundles 失败：${err instanceof Error ? err.message : String(err)}`
     }
   }
   return { ...res, bundles: installedBundles(profile) }
+}
+
+/** 把某个包名从 `dsh.profile.bundles` 层栈中剔除（幂等）。 */
+function stripBundle(name: string, profile = 'web'): void {
+  const { manifest, dir } = readProfilePackage(profile)
+  const bundles = [...installedBundles(profile)]
+  const at = bundles.indexOf(name)
+  if (at === -1) return
+  bundles.splice(at, 1)
+  const dsh = (manifest.dsh ?? {}) as { profile?: { bundles?: string[] } }
+  manifest.dsh = { ...dsh, profile: { ...(dsh.profile ?? {}), bundles } }
+  writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest, null, 2))
 }
 
 /**

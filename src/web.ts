@@ -151,6 +151,7 @@ export function buildHandlers(rt: MarketRuntime) {
       try {
         sendJson(res, 200, {
           bundles: manage.installedBundles(rt.profile),
+          removable: manage.installedRemovable(rt.profile),
           byRepo: manage.mapInstalledByRepo(rt.profile),
           self: manage.selfInstalled(rt.profile),
         })
