@@ -46,15 +46,18 @@ export function installedBundles(profile = 'web'): string[] {
   return dsh?.profile?.bundles ?? []
 }
 
+/** 本插件自身的包名：插件管理不允许卸载自己。 */
+const SELF = 'dsh-plugin-rank'
+
 /**
  * 可卸载的插件名单：仅包含「确实是 profile 直接依赖」的 bundle。
  * 基础 bundle（如 @deepseek-ai/dsh-base、@deepseek-ai/dsh-web-app）由 profile
- * 组合注入、不在 dependencies 中，不在可卸载之列。
+ * 组合注入、不在 dependencies 中，不在可卸载之列；本插件自身也不可卸载。
  */
 export function installedRemovable(profile = 'web'): string[] {
   const { manifest } = readProfilePackage(profile)
   const deps = (manifest.dependencies ?? {}) as Record<string, string>
-  return installedBundles(profile).filter((name) => deps[name] !== undefined)
+  return installedBundles(profile).filter((name) => deps[name] !== undefined && name !== SELF)
 }
 
 /** 某包名是否已是 profile 的直接依赖。 */
@@ -125,7 +128,7 @@ export function reconcileBundles(profile = 'web'): void {
 /** 安装插件。spec 可以是 npm 包名或 GitHub 的 owner/repo。 */
 export function install(spec: string, profile = 'web'): ManageResult {
   const { dir } = readProfilePackage(profile)
-  const res = runPnpm(['--filter', '@deepseek-ai/dsh-profile', 'add', spec], dir)
+  const res = runPnpm(['add', spec], dir)
   if (res.ok) {
     try {
       reconcileBundles(profile)
@@ -136,10 +139,19 @@ export function install(spec: string, profile = 'web'): ManageResult {
   return { ...res, bundles: installedBundles(profile) }
 }
 
-/** 卸载插件。name 是已安装的包名。 */
+/** 卸载插件。name 是已安装的包名。自身不可卸载。 */
 export function remove(name: string, profile = 'web'): ManageResult {
+  if (name === SELF) {
+    return {
+      ok: false,
+      command: `pnpm remove ${name}`,
+      output: '',
+      error: '不能卸载当前插件自身',
+      bundles: installedBundles(profile),
+    }
+  }
   const { dir } = readProfilePackage(profile)
-  const res = runPnpm(['--filter', '@deepseek-ai/dsh-profile', 'remove', name], dir)
+  const res = runPnpm(['remove', name], dir)
   if (res.ok) {
     try {
       // 先重算新增，再把目标包从层栈剔除（不动基础 bundle）。
