@@ -6,6 +6,22 @@
   <a href="https://github.com/eborewbf/dsh-plugin-rank/blob/main/README.md">English</a> · <a href="./README.zh.md">中文</a>
 </p>
 
+## 🎯 为什么你需要它
+
+DSH 插件生态已经有**几千个**「插件」，但绝大多数是噪音：
+
+- 🎭 **蹭热度 / 蹭流量的**：只是把 `dsh-plugin` 当营销话题贴上去，根本不是真正的 DSH 专属插件。
+- 🧰 **伪插件**：只是支持多个 agent CLI 的通用工具，打着 `dsh-plugin` 旗号。
+- ❓ **好坏难辨**：到底哪个好用？哪个不能用？哪个效果差？
+
+**挨个逛仓库要花好几天。** 这个项目帮你过滤噪音，不再靠猜：
+
+- ⭐ 按**真实 GitHub 星标**排名，而不是看谁自吹自擂。
+- 💡 按**活跃度 + issue 健康度 + 增长势头**推荐，而不是看谁的声量高。
+- 🏷 把**长期未更新 / 已归档**的插件标出来，避免装到死掉、过时的东西。
+
+**告别试错成本。一眼看清 DSH 插件生态全景，快速选对插件。**
+
 ## ✨ 功能
 
 - ⭐ **星标排名**：按 GitHub 星标数排序，并写清每一项的排名理由（星标、名次、fork、维护活跃度、是否归档）。
@@ -38,17 +54,6 @@ dsh web
 | `POST /plugin-rank/api/install` | `{ spec: 'owner/repo' \| 'npm 包名' }` |
 | `POST /plugin-rank/api/remove` | `{ name: '包名' }` |
 | `POST /plugin-rank/api/translate` | `{ text: '英文' }` → `{ zh: '中文' }`（百度翻译，可选） |
-
-## 🧩 难点与方案
-
-| 难点 | 方案 |
-| --- | --- |
-| **如何判断「真插件」** | 以 npm `dsh-plugin` 关键字为主信源（保证是真插件）；GitHub topic 池 + 逐仓库 Core API 只做星标增强，不参与插件身份判定。 |
-| **GitHub API 限额**（无 token 60/小时，有 token 5000/小时） | 多级缓存（6 小时）+ 后台 `enrich()` 分批补齐缺失星标，页面加载快、数据渐进补全。 |
-| **中英文界面切换** | 静态文本用 `data-i18n` 标记，`applyStaticLang()` + `refreshStatus()` 在每次切换时同步刷新动态文本。 |
-| **插件描述翻译** | 免费翻译源（Google/Lingva 被墙、MyMemory 限流）不稳定 → 走后端 + 百度翻译接口，前端按卡片懒加载并缓存；密钥经环境变量注入，保证开源安全。 |
-| **安装 / 卸载** | 复用 DSH 官方 pnpm 机制，写回 `dsh.profile.bundles`，与官方 `dsh plugin` 等价。 |
-| **不改动官方前端** | 作为 host 侧插件，通过 DSH 的 `webServer` 服务注册 `/plugin-rank/*` 路由。 |
 
 ## ⚙️ 配置
 

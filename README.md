@@ -6,6 +6,22 @@
   <a href="./README.md">English</a> · <a href="https://github.com/eborewbf/dsh-plugin-rank/blob/main/README.zh.md">中文</a>
 </p>
 
+## 🎯 Why you need this
+
+The DSH plugin ecosystem already has **tens of thousands** of "plugins" — but most of them are noise:
+
+- 🎭 **Bandwagon plugins**: just slap `dsh-plugin` on as a marketing topic, not real DSH-specific plugins.
+- 🧰 **Pretenders**: generic tools that support many agent CLIs, merely labeled with `dsh-plugin`.
+- ❓ **Unknown quality**: which one is actually good? Which one is broken? Which one performs poorly?
+
+**Reading repos one by one costs days.** This project cuts through the noise so you stop guessing:
+
+- ⭐ Rank by **real GitHub stars**, not self-promotion.
+- 💡 Recommend by **activity + issue health + growth**, not just hype.
+- 🏷 Mark **long-unmaintained / archived** plugins so you don't install dead or outdated ones.
+
+**Stop trial-and-error. See the whole DSH ecosystem at a glance and pick the right one fast.**
+
 ## ✨ Features
 
 - ⭐ **Star Ranking**: Sort all plugins by GitHub stars, with a clear reason for each position (stars, rank, forks, maintenance activity, archived or not).
@@ -38,17 +54,6 @@ dsh web
 | `POST /plugin-rank/api/install` | `{ spec: 'owner/repo' \| 'npm package' }` |
 | `POST /plugin-rank/api/remove` | `{ name: 'package' }` |
 | `POST /plugin-rank/api/translate` | `{ text: 'English' }` → `{ zh: '中文' }` (Baidu Translate, optional) |
-
-## 🧩 Challenges & Solutions
-
-| Challenge | Solution |
-| --- | --- |
-| **How to tell a "real" plugin from noise** | npm `dsh-plugin` keyword is the primary source (guarantees authenticity); GitHub topic pool + per-repo Core API only enrich stars, never decide plugin identity. |
-| **GitHub API rate limits** (60/hr unauthenticated, 5000/hr with token) | Multi-level caching (6h) + a background `enrich()` that fills in missing stars in batches, so page loads stay fast and data is completed progressively. |
-| **ZH/EN UI switching** | `data-i18n` marks static text; `applyStaticLang()` + `refreshStatus()` refresh dynamic text on every language change. |
-| **Plugin description translation** | Free translation sources (Google/Lingva blocked in CN, MyMemory rate-limited) are unreliable → backend + Baidu Translate endpoint, frontend lazy-loads & caches per-card; keys injected via env vars for open-source safety. |
-| **Install / uninstall** | Reuse DSH's official pnpm mechanism and write back to `dsh.profile.bundles`, equivalent to `dsh plugin`. |
-| **No changes to official frontend** | Runs as a host-side plugin registering `/plugin-rank/*` routes through DSH's `webServer` service. |
 
 ## ⚙️ Configuration
 
