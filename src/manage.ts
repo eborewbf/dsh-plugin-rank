@@ -16,6 +16,35 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { profileDir } from './cache.js'
 
+/** 国内 npm 镜像源。 */
+const MIRROR = 'https://registry.npmmirror.com/'
+
+/** 中国大陆时区（Asia/Shanghai 兼含澳门/香港 UTC+8；其余主要覆盖中国标准时区）。 */
+const CHINA_TZ = new Set(['Asia/Shanghai', 'Asia/Chongqing', 'Asia/Harbin', 'Asia/Urumqi'])
+
+/**
+ * 决定本次 pnpm 操作所用的 registry：
+ * - 若用户已配置非默认 registry（如手动设了国内/公司镜像），则尊重用户配置，不覆盖；
+ * - 否则按系统时区判断：中国大陆用户走国内镜像加速，海外用户走官方 npmjs。
+ * @returns 需要显式追加的 `--registry` 值；无需指定时返回 undefined。
+ */
+function resolveRegistry(): string | undefined {
+  try {
+    const probe = spawnSync(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['config', 'get', 'registry'], {
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+    })
+    const configured = (probe.stdout ?? '').trim()
+    if (configured && !/registry\.npmjs\.org/.test(configured)) {
+      return undefined // 用户已自定义镜像，尊重之
+    }
+  } catch {
+    /* 探测失败则回退到按时间轴判断 */
+  }
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+  return CHINA_TZ.has(tz) ? MIRROR : undefined
+}
+
 /** 一次安装/卸载操作的结果。 */
 export interface ManageResult {
   ok: boolean
@@ -128,7 +157,10 @@ export function reconcileBundles(profile = 'web'): void {
 /** 安装插件。spec 可以是 npm 包名或 GitHub 的 owner/repo。 */
 export function install(spec: string, profile = 'web'): ManageResult {
   const { dir } = readProfilePackage(profile)
-  const res = runPnpm(['add', spec], dir)
+  const args = ['add', spec]
+  const mirror = resolveRegistry()
+  if (mirror) args.push('--registry', mirror)
+  const res = runPnpm(args, dir)
   if (res.ok) {
     try {
       reconcileBundles(profile)
@@ -151,7 +183,10 @@ export function remove(name: string, profile = 'web'): ManageResult {
     }
   }
   const { dir } = readProfilePackage(profile)
-  const res = runPnpm(['remove', name], dir)
+  const args = ['remove', name]
+  const mirror = resolveRegistry()
+  if (mirror) args.push('--registry', mirror)
+  const res = runPnpm(args, dir)
   if (res.ok) {
     try {
       // 先重算新增，再把目标包从层栈剔除（不动基础 bundle）。

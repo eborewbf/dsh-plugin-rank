@@ -180,6 +180,9 @@ export function RankModal({ onClose }: { onClose: () => void }) {
   const [loadingMan, setLoadingMan] = useState(false)
   const [recTop, setRecTop] = useState(10)
 
+  // 安装/卸载进行中（按包名标记，用于按钮显示“安装中…/卸载中…”）
+  const [busy, setBusy] = useState<Record<string, boolean>>({})
+
   // 翻译描述
   const [translateOnState, setTranslateOnState] = useState(translateOn)
   const [descZh, setDescZh] = useState<Record<string, string>>({})
@@ -280,6 +283,7 @@ export function RankModal({ onClose }: { onClose: () => void }) {
 
   /** 安装插件。 */
   const install = async (pkgName: string) => {
+    setBusy((p) => ({ ...p, [pkgName]: true }))
     try {
       const res = await fetch(`${API}/install`, {
         method: 'POST',
@@ -295,11 +299,14 @@ export function RankModal({ onClose }: { onClose: () => void }) {
       }
     } catch (err) {
       setToast({ msg: t('empty.loadfail') + String(err), ok: false })
+    } finally {
+      setBusy((p) => ({ ...p, [pkgName]: false }))
     }
   }
 
   /** 卸载插件。 */
   const remove = async (name: string) => {
+    setBusy((p) => ({ ...p, [name]: true }))
     try {
       const res = await fetch(`${API}/remove`, {
         method: 'POST',
@@ -315,6 +322,8 @@ export function RankModal({ onClose }: { onClose: () => void }) {
       }
     } catch (err) {
       setToast({ msg: t('empty.loadfail') + String(err), ok: false })
+    } finally {
+      setBusy((p) => ({ ...p, [name]: false }))
     }
   }
 
@@ -373,21 +382,24 @@ export function RankModal({ onClose }: { onClose: () => void }) {
   /** 渲染一张卡片的操作按钮（安装/卸载）。 */
   const renderActions = (pkgName: string, fullName: string | null) => {
     const installedNow = isInstalled(pkgName, fullName)
+    const isBusy = !!busy[pkgName]
     return (
       <div className="pr-actions">
         {!installedNow && (
           <button
             type="button"
             className="pr-install"
+            disabled={isBusy}
             onClick={() => void install(pkgName)}
-          >{t('install')}</button>
+          >{isBusy ? t('installing') : t('install')}</button>
         )}
         {installedNow && (
           <button
             type="button"
             className="pr-remove"
+            disabled={isBusy}
             onClick={() => void remove(pkgName)}
-          >{t('uninstall')}</button>
+          >{isBusy ? t('uninstalling') : t('uninstall')}</button>
         )}
       </div>
     )
@@ -567,7 +579,7 @@ export function RankModal({ onClose }: { onClose: () => void }) {
                 <div className="pr-desc">{t('manage.tip')}</div>
               </div>
               <div className="pr-actions">
-                <button type="button" className="pr-remove" onClick={() => void remove(name)}>{t('uninstall')}</button>
+                <button type="button" className="pr-remove" disabled={!!busy[name]} onClick={() => void remove(name)}>{busy[name] ? t('uninstalling') : t('uninstall')}</button>
               </div>
             </div>
           ))}

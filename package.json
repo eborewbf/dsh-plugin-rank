@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-rank",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "DeepSeek Harness 插件排名与推荐中心：抓取全部 DSH 插件，按星标排名（含理由）、智能推荐（含理由）、一键安装/卸载管理。",
   "keywords": [
     "deepseek",
