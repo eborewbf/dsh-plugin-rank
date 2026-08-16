@@ -3,7 +3,7 @@
 > **DeepSeek Harness Plugin Ranking & Recommendation Center** — aggregate, rank, recommend, and manage all DSH plugins from GitHub / npm on a single page.
 
 <p align="center">
-  <a href="./README.md">English</a> · <a href="./README.zh.md">中文</a>
+  <a href="./README.md">English</a> · <a href="https://github.com/eborewbf/dsh-plugin-rank/blob/main/README.zh.md">中文</a>
 </p>
 
 ## ✨ Features

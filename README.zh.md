@@ -3,7 +3,7 @@
 > **DeepSeek Harness 插件排名与推荐中心** —— 把 GitHub / npm 上全部 DSH 插件「聚合、排名、推荐、管理」到同一个页面。
 
 <p align="center">
-  <a href="./README.md">English</a> · <a href="./README.zh.md">中文</a>
+  <a href="https://github.com/eborewbf/dsh-plugin-rank/blob/main/README.md">English</a> · <a href="./README.zh.md">中文</a>
 </p>
 
 ## ✨ 功能
