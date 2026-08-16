@@ -39,6 +39,17 @@ dsh web
 | `POST /plugin-rank/api/remove` | `{ name: '包名' }` |
 | `POST /plugin-rank/api/translate` | `{ text: '英文' }` → `{ zh: '中文' }`（百度翻译，可选） |
 
+## 🧩 难点与方案
+
+| 难点 | 方案 |
+| --- | --- |
+| **如何判断「真插件」** | 以 npm `dsh-plugin` 关键字为主信源（保证是真插件）；GitHub topic 池 + 逐仓库 Core API 只做星标增强，不参与插件身份判定。 |
+| **GitHub API 限额**（无 token 60/小时，有 token 5000/小时） | 多级缓存（6 小时）+ 后台 `enrich()` 分批补齐缺失星标，页面加载快、数据渐进补全。 |
+| **中英文界面切换** | 静态文本用 `data-i18n` 标记，`applyStaticLang()` + `refreshStatus()` 在每次切换时同步刷新动态文本。 |
+| **插件描述翻译** | 免费翻译源（Google/Lingva 被墙、MyMemory 限流）不稳定 → 走后端 + 百度翻译接口，前端按卡片懒加载并缓存；密钥经环境变量注入，保证开源安全。 |
+| **安装 / 卸载** | 复用 DSH 官方 pnpm 机制，写回 `dsh.profile.bundles`，与官方 `dsh plugin` 等价。 |
+| **不改动官方前端** | 作为 host 侧插件，通过 DSH 的 `webServer` 服务注册 `/plugin-rank/*` 路由。 |
+
 ## ⚙️ 配置
 
 - **翻译（可选）**：设置环境变量 `BAIDU_APPID` 与 `BAIDU_SECRET_KEY` 后，页面「🌐 中文描述」开关即可把插件描述翻译为中文。
